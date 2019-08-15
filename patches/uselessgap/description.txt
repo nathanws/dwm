@@ -1,0 +1,37 @@
+For aesthetic purposes, this patch:
+
+adds useless gaps around windows
+removes everything (gaps and borders) when in monocle mode for aesthetic purpose.
+
+The size of the gap is configured in config.h:
+
+static const unsigned int gappx     = 6;        /* gap pixel between windows */
+
+Example
+
+No gaps:
+
++-----------------+-------+
+|                 |       |
+|                 |       |
+|                 |       |
+|                 +-------|
+|                 |       |
+|                 |       |
+|                 |       |
++-----------------+-------+
+
+With gaps around windows:
+
++---------------------------+
+|+----------------++-------+|
+||                ||       ||
+||                ||       ||
+||                ||       ||
+||                |+-------+|
+||                |+-------+|
+||                ||       ||
+||                ||       ||
+||                ||       ||
+|+----------------++-------+|
++---------------------------+
