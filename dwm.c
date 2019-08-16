@@ -2239,38 +2239,6 @@ centeredmaster(Monitor *m)
         }
 }
 
-static void
-bstack(Monitor *m) {
-	int w, h, mh, mx, tx, ty, tw;
-	unsigned int i, n;
-	Client *c;
-
-	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
-	if (n == 0)
-		return;
-	if (n > m->nmaster) {
-		mh = m->nmaster ? m->mfact * m->wh : 0;
-		tw = m->ww / (n - m->nmaster);
-		ty = m->wy + mh;
-	} else {
-		mh = m->wh;
-		tw = m->ww;
-		ty = m->wy;
-	}
-	for (i = mx = 0, tx = m->wx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++) {
-		if (i < m->nmaster) {
-			w = (m->ww - mx) / (MIN(n, m->nmaster) - i);
-			resize(c, m->wx + mx, m->wy, w - (2 * c->bw), mh - (2 * c->bw), 0);
-			mx += WIDTH(c);
-		} else {
-			h = m->wh - mh;
-			resize(c, tx, ty, tw - (2 * c->bw), h - (2 * c->bw), 0);
-			if (tw != m->ww)
-				tx += WIDTH(c);
-		}
-	}
-}
-
 void
 centeredfloatingmaster(Monitor *m)
 {
@@ -2320,12 +2288,55 @@ centeredfloatingmaster(Monitor *m)
 }
 
 static void
+bstack(Monitor *m) {
+	int w, h, mh, mx, tx, ty, tw;
+	unsigned int i, n;
+        float mfacts = 0, sfacts = 0;
+	Client *c;
+
+	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++) {
+               if (n < m->nmaster)
+                     mfacts += c->cfact;
+               else
+                     sfacts += c->cfact;
+        }
+
+	if (n == 0)
+		return;
+
+	if (n > m->nmaster) { // if there are any tiles in the stack
+		mh = m->nmaster ? m->mfact * m->wh : 0;
+		ty = m->wy + mh;
+	} else {             // if all tiles are masters
+		mh = m->wh;
+		ty = m->wy;
+	}
+	for (i = mx = 0, tx = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++) {
+		if (i < m->nmaster) {
+                        // size any master clients
+			w = (m->ww - mx) * (c->cfact / mfacts);
+			resize(c, m->wx + mx, m->wy, w - (2 * c->bw), mh - (2 * c->bw), 0);
+			mx += WIDTH(c);
+                        mfacts -= c->cfact;
+		} else {
+                        // size any stack clients
+			h = m->wh - mh;
+                        tw = (m->ww -tx) * (c->cfact / sfacts);
+			resize(c, tx, ty, tw - (2 * c->bw), h - (2 * c->bw), 0);
+                        tx += WIDTH(c);
+                        sfacts -= c->cfact;
+		}
+	}
+}
+
+static void
 bstackhoriz(Monitor *m) {
 	int w, mh, mx, tx, ty, th;
 	unsigned int i, n;
 	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
+
 	if (n == 0)
 		return;
 	if (n > m->nmaster) {
